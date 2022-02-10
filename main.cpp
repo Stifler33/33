@@ -12,7 +12,7 @@ public:
         ifstream file;
         file.open(_path);
         if (!file.is_open()){
-            cout << "file not open\n";
+            cout << "Store: file not open\n";
         }else{
             while (!file.eof()){
                 string name;
@@ -23,41 +23,45 @@ public:
             file.close();
             //input info base
             if (info) {
-                cout << "base is full\n";
+                cout << "Store: base is full\n";
                 for (const auto &itr: base) {
                     cout << itr.first << " " << itr.second << endl;
                 }
             }
         }
     }
-    void issueGoods(map<string, int>& _obj, string& name, int& sum) {
+    bool issueGoods(string& name, int& sum) {
         if (sum <= 0 || sum > INT_MAX){
-            cout << "Error sum\n";
-            return;
+            cout << "Store: Error sum\n";
+            return false;
         }
         if (auto itrBase = base.find(name); itrBase != base.end()){
             if (itrBase->second >= sum){
-                if (auto i = _obj.find(name); i != _obj.end()){
-                    i->second += sum;
-                    itrBase->second -= sum;
-                    return;
-                }
-                _obj.insert({itrBase->first, sum});
                 itrBase->second -= sum;
-                return;
+                return true;
             }
-            cout << "there is no such quantity\n";
-            return;
+            cout << "Store: there is no such quantity\n";
+            return false;
         }
-        cout << "not product\n";
+        cout << "Store: not product\n";
+        return false;
     }
-    void returnBack(string& name, int& sum) {
+    bool returnBack(string& name, int& sum) {
         if (sum <= 0 || sum > INT_MAX){
-            cout << "Error sum\n";
-            return;
+            cout << "Store: Error sum\n";
+            return false;
         }
         if (auto itr = base.find(name); itr != base.end()){
             itr->second += sum;
+            return true;
+        }
+        cout << "Store: never had suh a product\n";
+        return false;
+    }
+    void listBase(){
+        cout << "Store :\n";
+        for (auto i : base){
+            cout << i.first << " " << i.second << endl;
         }
     }
 };
@@ -71,10 +75,45 @@ public:
         store = &_store;
     }
     void add(string name, int sum) {
-        store->issueGoods(usBas, name, sum);
+        if (sum <= 0 || sum > INT_MAX){
+            cout << "Basket: Error sum\n";
+            return;
+        }
+        if (store->issueGoods(name, sum)){
+            if (auto itr = usBas.find(name); itr != usBas.end()){
+                itr->second += sum;
+                cout << "Basket: add " << name << " in sum " << sum << endl;
+                return;
+            }
+            usBas.insert({name, sum});
+            cout << "Basket: add " << name << " in sum " << sum << endl;
+        }
+    }
+    void remove(string name, int sum){
+        if (auto itr = usBas.find(name); itr != usBas.end()){
+            if (sum > itr->second || sum <= 0){
+                cout << "Basket: not correct sum\n";
+                return;
+            }
+            if (store->returnBack(name, sum)){
+                if (itr->second - sum == 0) {
+                    usBas.erase(name);
+                    cout << "Basket: delete " << name << " in sum " << sum << endl;
+                    return;
+                }
+                itr->second -= sum;
+                cout << "Basket: remove " << name << " in sum " << sum << endl;
+                return;
+            }
+        }else {
+            cout << "Basket: there is no such product\n";
+            return;
+        }
+
+        cout << "Basket: delete impossible product\n";
     }
     void listProduct(){
-        if (usBas.empty()) cout << "basket empty\n";
+        if (usBas.empty()) cout << "Basket: basket empty\n";
         for (auto i : usBas){
             cout << i.first << " " << i.second << endl;
         }
@@ -85,6 +124,12 @@ int main() {
     Store store("..\\data.txt", true);
     Basket basket(store);
     basket.add("banana", 4);
+    basket.add("banana", 2);
+    basket.remove("banana", 8);
+    basket.add("banana", 7);
+    basket.add("bread", 10);
+    basket.remove("bread", 10);
     basket.listProduct();
+    store.listBase();
     return 0;
 }
