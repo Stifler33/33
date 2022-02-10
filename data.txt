@@ -1,0 +1,5 @@
+orange 13
+banana 10
+apple 5
+beer 7
+bread 10
